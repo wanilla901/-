@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ВКонтакте 2007 года</title>
+    <style>
+        body {
+            background-color: #f4f4f4; /* Цвет фона */
+            font-family: 'Helvetica Neue', Arial, sans-serif; /* Шрифт */
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        header {
+            background-color: #2a7fdb; /* Цвет заголовка */
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+
+        #container {
+            display: flex;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 20px auto; /* Центрирование контейнера */
+        }
+
+        nav {
+            background-color: #fff;
+            padding: 10px;
+            width: 200px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        nav a {
+            display: block;
+            padding: 10px;
+            color: #007BFF;
+            text-decoration: none;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+
+        nav a:hover {
+            background-color: #e9ecef; /* Цвет фона при наведении */
+        }
+
+        main {
+            flex: 1;
+            margin-left: 20px;
+        }
+
+        .section {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #2a2a2a;
+            margin-bottom: 15px;
+        }
+
+        .message, .profile, .post {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+            background-color: #f9f9f9;
+        }
+
+        img {
+            max-width: 50px;
+            border-radius: 50%;
+            float: left;
+            margin-right: 10px;
+        }
+
+        input[type="text"], input[type="file"], input[type="password"], input[type="submit"] {
+            width: calc(100% - 12px);
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+        }
+
+        input[type="submit"] {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #0056b3; /* Темно-синий при наведении */
+        }
+
+        .delete-button {
+            background-color: transparent;
+            color: #dc3545;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .delete-button:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center; 
+            margin-top: 20px;
+            color: #777;
+        }
+
+        .login-section {
+            display: none; /* Скрываем блок с логином */
+        }
+
+        /* Стиль для скрытия и показа разделов */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ВКонтакте 2007</h1>
+    </header>
+
+    <div id="container">
+        <nav>
+            <h2>Навигация</h2>
+            <a href="#messages">Сообщения</a>
+            <a href="#profiles">Профили</a>
+            <a href="#photos">Фото</a>
+            <a href="#settings">Настройки</a>
+            <button id="logoutButton" onclick="logout()" class="hidden">Выйти</button> <!-- Кнопка выхода -->
+        </nav>
+
+        <main>
+            <div class="section" id="loginSection">
+                <h2>Вход в профиль</h2>
+                <form id="loginForm" onsubmit="login(); return false;">
+                    <input type="text" id="loginUsername" placeholder="Имя пользователя" required>
+                    <input type="password" id="loginPassword" placeholder="Пароль" required>
+                    <input type="submit" value="Войти">
+                </form>
+            </div>
+
+            <div class="section" id="messages">
+                <h2>Общая доска сообщений</h2>
+                <div id="messagesList"></div>
+                <form id="messageForm" onsubmit="postMessage(); return false;">
+                    <input type="text" id="messageInput" placeholder="Напишите сообщение" required>
+                    <input type="submit" value="Отправить сообщение">
+                </form>
+            </div>
+
+            <div class="section" id="profiles">
+                <h2>Создание профиля</h2>
+                <form id="profileForm" onsubmit="createProfile(); return false;">
+                    <input type="text" id="username" placeholder="Имя пользователя" required>
+                    <input type="text" id="bio" placeholder="Краткая информация о себе" required>
+                    <input type="password" id="password" placeholder="Пароль" required>
+                    <input type="file" id="profilePhoto" accept="image/*">
+                    <input type="submit" value="Создать профиль">
+                </form>
+                <div id="profilesList"></div>
+            </div>
+
+            <div class="section" id="photos">
+                <h2>Публикация фото</h2>
+                <form id="photoForm" onsubmit="postPhoto(); return false;">
+                    <input type="file" id="photoInput" accept="image/*" required>
+                    <input type="text" id="photoDescription" placeholder="Описание фотографии" required>
+                    <input type="submit" value="Опубликовать фото">
+                </form>
+                <div id="postsList"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentUser = null; // Текущий пользователь
+        const socket = new WebSocket('ws://localhost:8080'); // Соединение с WebSocket сервером
+
+        socket.onopen = function() {
+            console.log('Connected to WebSocket server');
+        };
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'init') {
+                // Инициализация данных
+                displayMessages(data.messages);
+                displayProfiles(data.profiles);
+                displayPosts(data.posts);
+            } else if (data.type === 'newMessage') {
+                // Новое сообщение
+                addMessage(data.content);
+            } else if (data.type === 'newProfile') {
+                // Новый профиль
+                addProfile(data.content);
+            } else if (data.type === 'newPost') {
+                // Новый пост
+                addPost(data.content);
+            }
+        };
+
+        // Функция для входа в профиль
+        function login() {
+            const username = document.getElementById("loginUsername").value;
+            const password = document.getElementById("loginPassword").value;
+            const profiles = JSON.parse(localStorage.getItem("profiles")) || [];
+
+            // Проверка существования профиля
+            const profile = profiles.find(p => p.username === username && p.password === password);
+            if (profile) {
+                currentUser = username;
+                document.getElementById("loginSection").style.display = "none"; // Скрываем раздел входа
+                document.getElementById("messages").style.display = "block"; // Показываем раздел сообщений
+                document.getElementById("profiles").style.display = "block"; // Показываем раздел профилей
+                document.getElementById("photos").style.display = "block"; // Показываем раздел фото
+                document.getElementById("logoutButton").classList.remove("hidden"); // Показываем кнопку выхода
+                loadMessages(); // Загружаем сообщения
+                loadProfiles(); // Загружаем профили
+                loadPosts(); // Загружаем публикации
+            } else {
+                alert("Неверное имя пользователя или пароль");
+            }
+        }
+
+        // Функция для выхода из профиля
+        function logout() {
+            currentUser = null;
+            document.getElementById("loginSection").style.display = "block"; // Показываем раздел входа
+            document.getElementById("messages").style.display = "none"; // Скрываем раздел сообщений
+            document.getElementById("profiles").style.display = "none"; // Скрываем раздел профилей
+            document.getElementById("photos").style.display = "none"; // Скрываем раздел фото
+            document.getElementById("logoutButton").classList.add("hidden"); // Скрываем кнопку выхода
+        }
+
+        // Функция для отправки сообщения
+        function postMessage() {
+            const messageInput = document.getElementById("messageInput");
+            const newMessage = {
+                username: currentUser,
+                content: messageInput.value
+            };
+            // Отправляем сообщение на сервер
+            socket.send(JSON.stringify({ type: 'newMessage', content: newMessage }));
+            messageInput.value = ""; // Очищаем поле ввода
+        }
+
+        // Функция для отображения сообщений
+        function displayMessages(messages) {
+            const messagesList = document.getElementById("messagesList");
+            messagesList.innerHTML = ""; // очищаем текущее содержание
+
+            messages.forEach(function(message) {
+                addMessage(message);
+            });
+        }
+
+        function addMessage(message) {
+            const messagesList = document.getElementById("messagesList");
+            const newMessage = document.createElement("div");
+            newMessage.className = "message";
+            newMessage.innerHTML = `<strong>${message.username}</strong>: ${message.content}`;
+            messagesList.appendChild(newMessage);
+        }
+
+        // Функция для создания профиля
+        function createProfile() {
+            const username = document.getElementById("username").value;
+            const bio = document.getElementById("bio").value;
+            const password = document.getElementById("password").value;
+            const photoInput = document.getElementById("profilePhoto");
+            const profiles = JSON.parse(localStorage.getItem("profiles")) || [];
+
+            // Проверка на существование профиля с таким же именем
+            if (profiles.some(profile => profile.username === username)) {
+                alert("Профиль с таким именем уже существует!");
+                return;
+            }
+
+            // Создание нового профиля
+            const newProfile = {
+                username: username,
+                bio: bio,
+                password: password,
+                photo: photoInput.files.length > 0 ? URL.createObjectURL(photoInput.files[0]) : ''
+            };
+
+            // Отправляем профиль на сервер
+            socket.send(JSON.stringify({ type: 'newProfile', content: newProfile }));
+
+            // Очищаем поля ввода
+            document.getElementById("username").value = "";
+            document.getElementById("bio").value = "";
+            document.getElementById("password").value = ""; 
+            document.getElementById("profilePhoto").value = "";
+        }
+
+        // Функция для отображения профилей
+        function displayProfiles(profiles) {
+            const profilesList = document.getElementById("profilesList");
+            profilesList.innerHTML = ""; // очищаем текущее содержание
+
+            profiles.forEach(function(profile) {
+                addProfile(profile);
+            });
+        }
+
+        function addProfile(profile) {
+            const profilesList = document.getElementById("profilesList");
+            const newProfile = document.createElement("div");
+            newProfile.className = "profile";
+            newProfile.innerHTML = `
+                <img src="${profile.photo}" alt="${profile.username}" />
+                <strong>${profile.username}</strong><br>
+                <span>${profile.bio}</span>
+            `;
+
+            // Добавляем кнопку удаления
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Удалить профиль";
+            deleteButton.className = "delete-button";
+            deleteButton.onclick = function() {
+                promptDeleteProfile(profile.username); // Вызываем функцию подтверждения удаления
+            };
+            newProfile.appendChild(deleteButton);
+            profilesList.appendChild(newProfile);
+        }
+
+        // Функция для запроса пароля перед удалением профиля
+        function promptDeleteProfile(username) {
+            const profiles = JSON.parse(localStorage.getItem("profiles")) || [];
+            const profile = profiles.find(p => p.username === username);
+            const password = prompt("Введите пароль для удаления профиля:");
+
+            if (password === profile.password) {
+                deleteProfile(username);
+                alert("Профиль удалён.");
+            } else {
+                alert("Неверный пароль. Профиль не был удалён.");
+            }
+        }
+
+        // Функция для удаления профиля
+        function deleteProfile(username) {
+            let profiles = JSON.parse(localStorage.getItem("profiles")) || [];
+            profiles = profiles.filter(p => p.username !== username); // Удаляем профиль по имени
+            localStorage.setItem("profiles", JSON.stringify(profiles));
+            displayProfiles(profiles); // Обновляем отображение
+        }
+
+        // Функция для публикации фотографии
+        function postPhoto() {
+            const photoInput = document.getElementById("photoInput");
+            const photoDescription = document.getElementById("photoDescription").value;
+            const posts = JSON.parse(localStorage.getItem("posts")) || [];
+
+            // Создание нового поста
+            if (photoInput.files.length > 0) {
+                const newPost = {
+                    image: URL.createObjectURL(photoInput.files[0]),
+                    description: photoDescription
+                };
+
+                // Отправляем пост на сервер
+                socket.send(JSON.stringify({ type: 'newPost', content: newPost }));
+
+                // Очищаем поля ввода
+                document.getElementById("photoInput").value = "";
+                document.getElementById("photoDescription").value = "";
+            }
+        }
+
+        // Функция для отображения постов
+        function displayPosts(posts) {
+            const postsList = document.getElementById("postsList");
+            postsList.innerHTML = ""; // очищаем текущее содержание
+
+            posts.forEach(function(post) {
+                addPost(post);
+            });
+        }
+
+        function addPost(post) {
+            const postsList = document.getElementById("postsList");
+            const newPost = document.createElement("div");
+            newPost.className = "post";
+            newPost.innerHTML = `
+                <img src="${post.image}" alt="Пост" />
+                <p>${post.description}</p>
+            `;
+
+            // Добавляем кнопку удаления
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Удалить пост";
+            deleteButton.className = "delete-button";
+            deleteButton.onclick = function() {
+                // Здесь можно добавить логику для удаления поста
+            };
+            newPost.appendChild(deleteButton);
+            postsList.appendChild(newPost);
+        }
+
+        // Функции для загрузки данных из localStorage
+        function loadMessages() {
+            const messages = JSON.parse(localStorage.getItem("messages")) || [];
+            displayMessages(messages);
+        }
+
+        function loadProfiles() {
+            const profiles = JSON.parse(localStorage.getItem("profiles")) || [];
+            displayProfiles(profiles);
+        }
+
+        function loadPosts() {
+            const posts = JSON.parse(localStorage.getItem("posts")) || [];
+            displayPosts(posts);
+        }
+    </script>
+    <footer>
+        <p>© 2007 ВКонтакте</p>
+    </footer>
+</body>
+</html>
+
+
+
